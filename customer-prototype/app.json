@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Customer Prototype",
+    "slug": "customer-prototype",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/applogo.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splashscreen.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/applogo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.srijaytech.customerprototype",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9daaac1a-a657-4085-87eb-d05f57a1cb1a"
+      }
+    }
+  }
+}
