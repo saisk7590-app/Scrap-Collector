@@ -12,7 +12,6 @@ import { COLORS } from "../../constants/colors";
 
 export default function PickupSummaryScreen({ navigation, route }) {
   const { items } = route.params;
-
   const [alternateNumber, setAlternateNumber] = useState("");
 
   const totalQty = items.reduce((s, i) => s + i.quantity, 0);
@@ -58,7 +57,6 @@ export default function PickupSummaryScreen({ navigation, route }) {
         </View>
       </ScrollView>
 
-      {/* Bottom Button */}
       <View style={styles.bottomBar}>
         <CustomButton
           title="Schedule Pickup"
@@ -66,6 +64,8 @@ export default function PickupSummaryScreen({ navigation, route }) {
             navigation.navigate("SchedulePickup", {
               items,
               alternateNumber,
+              totalQty,
+              totalWeight,
             })
           }
           variant="primary"
@@ -77,9 +77,7 @@ export default function PickupSummaryScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.white },
-
   scroll: { padding: 16, paddingBottom: 140 },
-
   title: { fontSize: 18, fontWeight: "600", marginBottom: 12 },
 
   row: {

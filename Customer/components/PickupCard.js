@@ -5,6 +5,29 @@ import { COLORS, SPACING, RADIUS } from "../constants";
 export default function PickupCard({ data }) {
   const isCompleted = data.status === "completed";
 
+  const formattedDate = data.created_at
+    ? new Date(data.created_at).toLocaleDateString()
+    : "";
+
+  const getItemDisplayValue = (item) => {
+    // Weight-based item
+    if (item.weight && item.weight > 0) {
+      return `${item.weight} kg`;
+    }
+
+    // Quantity-based item (support multiple possible keys)
+    if (item.qty && item.qty > 0) {
+      return `${item.qty} pcs`;
+    }
+
+    if (item.quantity && item.quantity > 0) {
+      return `${item.quantity} pcs`;
+    }
+
+    // If nothing exists
+    return "—";
+  };
+
   return (
     <View
       style={{
@@ -16,43 +39,50 @@ export default function PickupCard({ data }) {
         marginBottom: SPACING.md,
       }}
     >
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <View>
-          <Text style={{ fontSize: 15, fontWeight: "600" }}>
-            {data.scrapType}
-          </Text>
-          <Text
+      {/* ITEMS */}
+      {Array.isArray(data.items) &&
+        data.items.map((item, index) => (
+          <View
+            key={index}
             style={{
-              color: COLORS.textSecondary,
-              marginTop: 2,
+              flexDirection: "row",
+              justifyContent: "space-between",
+              marginBottom: 6,
             }}
           >
-            {data.quantity} kg
-          </Text>
-        </View>
+            <Text style={{ fontSize: 15, fontWeight: "600" }}>
+              {item.name}
+            </Text>
 
-        {isCompleted && (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <TrendingUp size={14} color={COLORS.primary} />
-            <Text
-              style={{
-                marginLeft: 4,
-                color: COLORS.primary,
-                fontWeight: "700",
-              }}
-            >
-              ₹{data.amount}
+            <Text style={{ color: COLORS.textSecondary }}>
+              {getItemDisplayValue(item)}
             </Text>
           </View>
-        )}
-      </View>
+        ))}
 
+      {/* AMOUNT */}
+      {isCompleted && (
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginTop: SPACING.xs,
+          }}
+        >
+          <TrendingUp size={14} color={COLORS.primary} />
+          <Text
+            style={{
+              marginLeft: 4,
+              color: COLORS.primary,
+              fontWeight: "700",
+            }}
+          >
+            ₹{data.amount || 0}
+          </Text>
+        </View>
+      )}
+
+      {/* DATE */}
       <Text
         style={{
           color: COLORS.textMuted,
@@ -60,7 +90,7 @@ export default function PickupCard({ data }) {
           marginTop: SPACING.xs,
         }}
       >
-        {data.date}
+        {formattedDate}
       </Text>
     </View>
   );

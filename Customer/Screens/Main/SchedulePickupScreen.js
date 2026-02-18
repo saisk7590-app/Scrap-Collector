@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { View, Text, FlatList, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ChevronLeft, Clock } from "lucide-react-native";
+import { Clock } from "lucide-react-native";
 
 import CustomButton from "../../components/CustomButton";
 import Header from "../../components/Header";
 import { COLORS } from "../../constants/colors";
+import { supabase } from "../../src/lib/supabase";
 
 const timeSlots = [
   { id: "1", time: "10:00 AM – 12:00 PM" },
@@ -14,50 +15,88 @@ const timeSlots = [
 ];
 
 export default function SchedulePickupScreen({ navigation, route }) {
-  const { items, alternateNumber } = route.params; 
+  const { items, alternateNumber } = route.params;
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
-  const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
+  const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
   const totalWeight = items.reduce((sum, i) => sum + i.weight, 0);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedSlot) {
       Alert.alert("Select Time", "Please select a pickup time slot");
       return;
     }
 
-    setLoading(true); 
-    setTimeout(() => {
-      setLoading(false);
-      navigation.navigate("Success", {
+    setLoading(true);
+
+    try {
+      // ✅ Get logged-in user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        Alert.alert("Error", "User not logged in");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Insert into pickups table
+      const { error: insertError } = await supabase
+        .from("pickups")
+        .insert([
+          {
+            user_id: user.id,
+            items: items,
+            total_qty: totalQty,
+            total_weight: totalWeight,
+            alternate_number: alternateNumber || null,
+            time_slot: selectedSlot.time, // ⚠️ make sure column exists
+            status: "scheduled",
+            amount: 0,
+          },
+        ]);
+
+      if (insertError) {
+        console.log("Supabase Insert Error:", insertError);
+        Alert.alert("Error", "Failed to schedule pickup");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Replace screen (prevents back navigation)
+      navigation.replace("Success", {
         time: selectedSlot.time,
         items,
         alternateNumber,
       });
-    }, 800);
+
+    } catch (err) {
+      console.log("Pickup Schedule Error:", err);
+      Alert.alert("Error", "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
-      {/* HEADER */}
       <SafeAreaView style={{ backgroundColor: COLORS.primary }}>
         <Header
-          variant="main"      // rectangle green header
+          variant="main"
           title="Schedule Pickup"
           showBack
-          onBackPress={() => navigation.goBack()}
         />
       </SafeAreaView>
 
-      {/* CONTENT */}
       <FlatList
         data={timeSlots}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <>
-            {/* SUMMARY CARD */}
             <View
               style={{
                 backgroundColor: COLORS.white,
@@ -82,12 +121,16 @@ export default function SchedulePickupScreen({ navigation, route }) {
               ))}
 
               <View
-                style={{ height: 1, backgroundColor: COLORS.border, marginVertical: 12 }}
+                style={{
+                  height: 1,
+                  backgroundColor: COLORS.border,
+                  marginVertical: 12,
+                }}
               />
 
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
                 <Text>Total Items</Text>
-                <Text>{totalItems}</Text>
+                <Text>{totalQty}</Text>
               </View>
 
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
@@ -130,14 +173,27 @@ export default function SchedulePickupScreen({ navigation, route }) {
                   >
                     {active && (
                       <View
-                        style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary }}
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: COLORS.primary,
+                        }}
                       />
                     )}
                   </View>
 
-                  <Clock size={18} color={active ? COLORS.primary : COLORS.textSecondary} />
+                  <Clock
+                    size={18}
+                    color={active ? COLORS.primary : COLORS.textSecondary}
+                  />
 
-                  <Text style={{ fontSize: 14, color: active ? COLORS.primary : "#374151" }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      color: active ? COLORS.primary : "#374151",
+                    }}
+                  >
                     {item.time}
                   </Text>
                 </View>
@@ -145,7 +201,13 @@ export default function SchedulePickupScreen({ navigation, route }) {
 
               <Text
                 onPress={() => setSelectedSlot(item)}
-                style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                }}
               />
             </View>
           );
@@ -164,7 +226,9 @@ export default function SchedulePickupScreen({ navigation, route }) {
               }}
             >
               <Text style={{ color: "#1E3A8A", fontSize: 13, lineHeight: 18 }}>
-                <Text style={{ fontWeight: "600" }}>Note:</Text> Our licensed collector will arrive within the selected time window. Please ensure items are ready for collection.
+                <Text style={{ fontWeight: "600" }}>Note:</Text> Our licensed
+                collector will arrive within the selected time window. Please
+                ensure items are ready for collection.
               </Text>
             </View>
 

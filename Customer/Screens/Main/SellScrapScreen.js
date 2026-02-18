@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { ScrollView, View, Text, Alert, TouchableOpacity } from "react-native";
+import { ScrollView, View, Text, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ChevronLeft } from "lucide-react-native";
 
 import Header from "../../components/Header";
 import CustomButton from "../../components/CustomButton";
@@ -9,10 +8,12 @@ import SellScrapCategoryCard from "../../components/SellScrapCategoryCard";
 
 import { COLORS } from "../../constants/colors";
 import { SCRAP_CATEGORIES, SCRAP_DATA, SCRAP_CONFIG } from "../../constants/scrap";
+import { supabase } from "../../src/lib/supabase";
 
 export default function SellScrapScreen({ navigation, route }) {
   const selectedCategory = route?.params?.category || null;
   const [expanded, setExpanded] = useState(selectedCategory);
+  const [loading, setLoading] = useState(false);
 
   const [items, setItems] = useState(() => {
     const obj = {};
@@ -23,6 +24,7 @@ export default function SellScrapScreen({ navigation, route }) {
   });
 
   const toggleCategory = (cat) => setExpanded(expanded === cat ? null : cat);
+
   const toggleItem = (name) =>
     setItems({ ...items, [name]: { ...items[name], selected: !items[name].selected } });
 
@@ -36,12 +38,17 @@ export default function SellScrapScreen({ navigation, route }) {
       setItems({ ...items, [name]: { ...items[name], weight: "", selected: false } });
       return;
     }
+
     const regex = /^\d*\.?\d{0,2}$/;
     if (!regex.test(value)) return;
-    setItems({ ...items, [name]: { ...items[name], weight: value, selected: parseFloat(value) > 0 } });
+
+    setItems({
+      ...items,
+      [name]: { ...items[name], weight: value, selected: parseFloat(value) > 0 },
+    });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const selectedItems = Object.keys(items)
       .filter((k) => items[k].selected)
       .map((k) => ({
@@ -55,23 +62,60 @@ export default function SellScrapScreen({ navigation, route }) {
       return;
     }
 
-    navigation.navigate("PickupSummary", { items: selectedItems });
+    try {
+      setLoading(true);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        Alert.alert("Error", "User not logged in");
+        return;
+      }
+
+      const totalWeight = selectedItems.reduce((acc, i) => acc + i.weight, 0);
+
+      const { data, error } = await supabase
+        .from("scrap_requests")
+        .insert([
+          {
+            user_id: user.id,
+            items: selectedItems,
+            total_weight: totalWeight,
+            status: "draft",
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        console.log(error);
+        Alert.alert("Error", "Failed to create scrap request");
+        return;
+      }
+
+      // Navigate with request_id
+      navigation.navigate("PickupSummary", {
+        items: selectedItems,
+        requestId: data.id,
+      });
+
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Error", "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.white }}>
-      {/* HEADER OUTSIDE SCROLLVIEW */}
       <SafeAreaView style={{ backgroundColor: COLORS.primary }}>
-        <Header
-          variant="main"        // rectangle type
-          title="Sell Scrap"
-          showBack
-        />
+        <Header variant="main" title="Sell Scrap" showBack />
       </SafeAreaView>
 
-      {/* CONTENT */}
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
-        {/* Category Cards */}
         {SCRAP_CATEGORIES.map((cat) => (
           <SellScrapCategoryCard
             key={cat}
@@ -87,25 +131,11 @@ export default function SellScrapScreen({ navigation, route }) {
           />
         ))}
 
-        {/* Note */}
-        <View
-          style={{
-            backgroundColor: COLORS.noteBg,
-            borderWidth: 1,
-            borderColor: COLORS.noteBorder,
-            borderRadius: 12,
-            padding: 14,
-            marginTop: 16,
-          }}
-        >
-          <Text style={{ color: COLORS.noteText, fontSize: 13, lineHeight: 18 }}>
-            <Text style={{ fontWeight: "600" }}>Note:</Text> Minimum pickup quantity is 15 kg. Requests below this may charge service fee ₹100
-          </Text>
-        </View>
-
-        {/* Sell Scrap Button */}
         <View style={{ marginTop: 24, marginBottom: 40 }}>
-          <CustomButton title="Sell Scrap" onPress={handleSubmit} />
+          <CustomButton
+            title={loading ? "Processing..." : "Sell Scrap"}
+            onPress={handleSubmit}
+          />
         </View>
       </ScrollView>
     </View>

@@ -9,8 +9,11 @@ export default function PickupSuccessScreen({ navigation, route }) {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.navigate("Home");
-    }, 2500);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Home" }],
+      });
+    }, 5000); // stays for 5 seconds
 
     return () => clearTimeout(timer);
   }, [navigation]);
@@ -33,7 +36,6 @@ export default function PickupSuccessScreen({ navigation, route }) {
           <Text style={styles.timeHighlight}>{time}</Text>
         </Text>
 
-        {/* OPTIONAL ALTERNATE NUMBER */}
         {alternateNumber ? (
           <Text style={styles.altText}>
             Alternate contact:{" "}
