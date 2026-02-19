@@ -12,21 +12,30 @@ app.use(cors());
 // ✅ PARSE JSON
 app.use(express.json());
 
-// ✅ ROUTES
-app.use("/api/auth", require("./routes/authRoutes"));
+// ✅ UNIFIED ROUTES
+const routes = require("./src/routes");
+app.use("/api", routes);
 
-// ✅ DB CHECK
-const pool = require("./config/db");
-pool.query("SELECT NOW()", (err, res) => {
-  if (err) {
-    console.error("DB error", err);
-  } else {
-    console.log("DB time:", res.rows[0]);
-  }
-});
+// ✅ SUPABASE CLIENT CHECK
+const supabase = require("./src/config/supabase");
+const supabaseUrl = process.env.SUPABASE_URL || 'https://mvdpuuokpdmowbdaedud.supabase.co';
+
+if (supabaseUrl) {
+  console.log("✅ Supabase initialized for project:", supabaseUrl);
+}
 
 // ✅ START SERVER
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+
+// ✅ GLOBAL ERROR HANDLING
+app.use((err, req, res, next) => {
+  console.error('SERVER ERROR:', err.stack);
+  res.status(500).json({
+    message: 'Internal Server Error',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Unified Backend running on port ${PORT}`);
 });
