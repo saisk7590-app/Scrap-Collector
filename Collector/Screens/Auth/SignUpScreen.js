@@ -1,13 +1,22 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Recycle } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import CustomInput from "../../components/CustomInput";
 import CustomButton from "../../components/CustomButton";
-import { COLORS, ROUTES, FONTS, SIZES } from "../../constants";
+import { supabase } from "../../src/lib/supabase";
 
-export default function SignUpScreen() {
+export default function CollectorSignUpScreen() {
   const navigation = useNavigation();
 
   const [fullName, setFullName] = useState("");
@@ -17,140 +26,170 @@ export default function SignUpScreen() {
 
   const handleSignUp = async () => {
     if (!fullName || !mobile || !password) {
-      alert("Please fill all fields");
+      Alert.alert("Error", "Please fill all fields");
       return;
     }
 
     if (mobile.length < 10) {
-      alert("Enter a valid mobile number");
-      return;
-    }
-
-    if (mobile === password) {
-      alert("Password cannot match mobile number");
+      Alert.alert("Error", "Enter a valid mobile number");
       return;
     }
 
     setLoading(true);
 
     try {
-      console.log("Sending register request...");
+      const email = `${mobile}@scrapcollector.in`;
 
-      const response = await fetch(
-        "http://localhost:5000/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fullName,
-            phone: mobile,
-            password,
-          }),
-        }
-      );
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
 
-      const data = await response.json();
-      console.log("Register response:", data);
-
-      if (!response.ok) {
-        alert(data.message || "Registration failed");
-        setLoading(false);
+      if (error) {
+        Alert.alert("Error", error.message);
         return;
       }
 
-      // ✅ SUCCESS → OTP SCREEN
-      navigation.navigate(ROUTES.OTP, { phone: mobile });
-    } catch (error) {
-      console.error("Signup error:", error);
-      alert("Server not reachable");
+      const userId = data.user.id;
+
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: userId,
+        full_name: fullName,
+        phone: mobile,
+        role: "collector",
+        wallet_balance: 0,
+      });
+
+      if (profileError) {
+        Alert.alert("Error", profileError.message);
+        return;
+      }
+
+      await AsyncStorage.setItem("userToken", userId);
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "CollectorDashboard" }],
+      });
+    } catch (err) {
+      Alert.alert("Error", "Signup failed");
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Recycle size={48} color={COLORS.primary} style={styles.logo} />
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.card}>
+          <Recycle size={60} color="#2563EB" style={styles.logo} />
 
-      <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>
-        Join us to start collecting scrap rewards
-      </Text>
+          <Text style={styles.title}>Collector Sign Up</Text>
+          <Text style={styles.subtitle}>Create your collector account</Text>
 
-      <CustomInput
-        placeholder="Full Name"
-        value={fullName}
-        onChangeText={setFullName}
-      />
+          <CustomInput
+            placeholder="Full Name"
+            value={fullName}
+            onChangeText={setFullName}
+          />
 
-      <CustomInput
-        placeholder="Mobile Number"
-        keyboardType="phone-pad"
-        value={mobile}
-        onChangeText={setMobile}
-      />
+          <CustomInput
+            placeholder="Mobile Number"
+            keyboardType="phone-pad"
+            value={mobile}
+            onChangeText={setMobile}
+          />
 
-      <CustomInput
-        placeholder="Password"
-        secure
-        value={password}
-        onChangeText={setPassword}
-      />
+          <CustomInput
+            placeholder="Password"
+            secure
+            value={password}
+            onChangeText={setPassword}
+          />
 
-      <CustomButton
-        title="Sign Up"
-        onPress={handleSignUp}
-        variant="primary"
-        loading={loading}
-      />
+          <CustomButton
+            title="Sign Up"
+            onPress={handleSignUp}
+            loading={loading}
+          />
 
-      <Text style={styles.link}>
-        Already have an account?{" "}
-        <Text
-          style={styles.linkPrimary}
-          onPress={() => navigation.navigate(ROUTES.LOGIN)}
-        >
-          Login
-        </Text>
-      </Text>
-    </View>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              Already have an account?{" "}
+            </Text>
+            <Text
+              style={styles.link}
+              onPress={() => navigation.navigate("Login")}
+            >
+              Login
+            </Text>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#E0E7FF", // light blue background
+  },
+
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    padding: SIZES.spacing,
     justifyContent: "center",
+    padding: 20,
   },
+
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 25,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+
   logo: {
     alignSelf: "center",
-    marginBottom: SIZES.spacing,
+    marginBottom: 15,
   },
+
   title: {
-    fontSize: FONTS.size.xl,
-    fontFamily: FONTS.semiBold,
+    fontSize: 24,
+    fontWeight: "700",
     textAlign: "center",
-    color: COLORS.textPrimary,
+    color: "#111827",
   },
+
   subtitle: {
     textAlign: "center",
-    color: COLORS.textSecondary,
-    marginBottom: SIZES.spacing,
-    fontSize: FONTS.size.md,
-    fontFamily: FONTS.regular,
+    color: "#6B7280",
+    marginBottom: 25,
+    fontSize: 15,
   },
+
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+
+  footerText: {
+    color: "#6B7280",
+    fontSize: 14,
+  },
+
   link: {
-    textAlign: "center",
-    marginTop: SIZES.spacing,
-    color: COLORS.textSecondary,
-    fontSize: FONTS.size.md,
-  },
-  linkPrimary: {
-    color: COLORS.primary,
-    fontFamily: FONTS.semiBold,
+    color: "#2563EB",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

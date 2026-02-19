@@ -3,7 +3,7 @@
 export const BUTTON_VARIANTS = {
   /* ================= PRIMARY (Main CTA) ================= */
   primary: {
-    backgroundColor: "#03C75A", // GREEN
+    backgroundColor: "#2563eb", // GREEN
     textColor: "#FFFFFF",       // WHITE
     borderWidth: 0,
     borderColor: "transparent",

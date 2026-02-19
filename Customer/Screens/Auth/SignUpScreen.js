@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View, Alert } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Recycle } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -35,7 +42,6 @@ export default function SignUpScreen() {
     try {
       const email = `${mobile}@scrapcollector.in`;
 
-      // 1️⃣ Create Auth User
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -53,7 +59,6 @@ export default function SignUpScreen() {
 
       const userId = data.user.id;
 
-      // 2️⃣ Insert Profile
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
@@ -65,16 +70,15 @@ export default function SignUpScreen() {
         });
 
       if (profileError) {
-        console.log("Profile Insert Error:", profileError);
         Alert.alert("Profile Error", profileError.message);
         return;
       }
 
-      // 3️⃣ Login Immediately (CREATE SESSION)
-      const { error: loginError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error: loginError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
       if (loginError) {
         Alert.alert("Login Error", loginError.message);
@@ -89,7 +93,6 @@ export default function SignUpScreen() {
       });
 
     } catch (err) {
-      console.log("Signup Catch Error:", err);
       Alert.alert("Error", "Something went wrong");
     } finally {
       setLoading(false);
@@ -98,49 +101,55 @@ export default function SignUpScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <Recycle size={48} color={COLORS.primary} style={styles.logo} />
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.card}>
+          <Recycle size={60} color={COLORS.primary} style={styles.logo} />
 
-        <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Join and start recycling today</Text>
 
-        <CustomInput
-          placeholder="Full Name"
-          value={fullName}
-          onChangeText={setFullName}
-        />
+          <CustomInput
+            placeholder="Full Name"
+            value={fullName}
+            onChangeText={setFullName}
+          />
 
-        <CustomInput
-          placeholder="Mobile Number"
-          keyboardType="phone-pad"
-          value={mobile}
-          onChangeText={setMobile}
-        />
+          <CustomInput
+            placeholder="Mobile Number"
+            keyboardType="phone-pad"
+            value={mobile}
+            onChangeText={setMobile}
+          />
 
-        <CustomInput
-          placeholder="Password"
-          secure
-          value={password}
-          onChangeText={setPassword}
-        />
+          <CustomInput
+            placeholder="Password"
+            secure
+            value={password}
+            onChangeText={setPassword}
+          />
 
-        <CustomButton
-          title="Sign Up"
-          onPress={handleSignUp}
-          loading={loading}
-        />
+          <CustomButton
+            title="Sign Up"
+            onPress={handleSignUp}
+            loading={loading}
+          />
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Already have an account?
-          </Text>
-          <Text
-            style={styles.link}
-            onPress={() => navigation.navigate(ROUTES.LOGIN)}
-          >
-            {" "}Login
-          </Text>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              Already have an account?{" "}
+            </Text>
+            <Text
+              style={styles.link}
+              onPress={() => navigation.navigate(ROUTES.LOGIN)}
+            >
+              Login
+            </Text>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -148,34 +157,58 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: "#DCFCE7", // Light green
   },
+
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    padding: SIZES.spacing,
     justifyContent: "center",
+    padding: 20,
   },
+
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 25,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+
   logo: {
     alignSelf: "center",
-    marginBottom: SIZES.spacing,
+    marginBottom: 15,
   },
+
   title: {
-    fontSize: FONTS.size.xl,
+    fontSize: 24,
+    fontWeight: "700",
     textAlign: "center",
-    marginBottom: SIZES.spacing,
+    color: "#111827",
   },
+
+  subtitle: {
+    textAlign: "center",
+    color: "#6B7280",
+    marginBottom: 25,
+    fontSize: 15,
+  },
+
   footer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: SIZES.spacing,
+    marginTop: 20,
   },
+
   footerText: {
     color: COLORS.textSecondary,
     fontSize: FONTS.size.md,
   },
+
   link: {
-    color: COLORS.primary,
+    color: COLORS.primary, // Green primary
     fontSize: FONTS.size.md,
     fontWeight: "bold",
   },

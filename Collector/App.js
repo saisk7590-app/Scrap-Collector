@@ -6,7 +6,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 /* ===== SCREENS ===== */
 import SignUpScreen from "./Screens/Auth/SignUpScreen";
 import LoginScreen from "./Screens/Auth/LoginScreen";
-import OTPScreen from "./Screens/Auth/OTPScreen";
 import CollectorDashboardScreen from "./Screens/Dashboard/CollectorDashboardScreen";
 import PickupDetailsScreen from "./Screens/Pickups/PickupDetailsScreen";
 import PickupActionScreen from "./Screens/Pickups/PickupActionScreen"; // ✅ ADD THIS
@@ -20,7 +19,7 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer>
         <Stack.Navigator
-          initialRouteName="CollectorDashboard"
+          initialRouteName="Login"
           screenOptions={{
             headerShown: false,
             animation: "slide_from_right",
@@ -33,10 +32,6 @@ export default function App() {
           <Stack.Screen
             name="Login"
             component={LoginScreen}
-          />
-          <Stack.Screen
-            name="OTP"
-            component={OTPScreen}
           />
           {/* Dashboard */}
           <Stack.Screen
