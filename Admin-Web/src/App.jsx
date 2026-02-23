@@ -1,15 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-import { LoginPage } from './pages/LoginPage';
-import { DashboardLayout } from './components/DashboardLayout';
-import { DashboardPage } from './pages/DashboardPage';
-import { UserManagementPage } from './pages/UserManagementPage';
-import { PickupRequestsPage } from './pages/PickupRequestsPage';
-import { ScrapCategoriesPage } from './pages/ScrapCategoriesPage';
-import { WalletPaymentsPage } from './pages/WalletPaymentsPage';
-import { NotificationsPage } from './pages/NotificationsPage';
-import { ReportsPage } from './pages/ReportsPage';
-import { SettingsPage } from './pages/SettingsPage';
+import { LoginPage } from "./pages/LoginPage";
+import { DashboardLayout } from "./components/DashboardLayout";
+import { DashboardPage } from "./pages/DashboardPage";
+import ComingSoonPage from "./pages/ComingSoon/ComingSoonPage";
 
 export default function App() {
   return (
@@ -19,17 +13,22 @@ export default function App() {
         {/* Login */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Dashboard Layout Wrapper */}
+        {/* Dashboard Layout */}
         <Route path="/" element={<DashboardLayout />}>
+
           <Route index element={<Navigate to="/dashboard" replace />} />
+
           <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="users" element={<UserManagementPage />} />
-          <Route path="pickup-requests" element={<PickupRequestsPage />} />
-          <Route path="scrap-categories" element={<ScrapCategoriesPage />} />
-          <Route path="wallet-payments" element={<WalletPaymentsPage />} />
-          <Route path="notifications" element={<NotificationsPage />} />
-          <Route path="reports" element={<ReportsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route path="pickups" element={<ComingSoonPage title="Pickup Management" />} />
+          <Route path="customers" element={<ComingSoonPage title="Customers" />} />
+          <Route path="collectors" element={<ComingSoonPage title="Collectors" />} />
+          <Route path="scrap-management" element={<ComingSoonPage title="Scrap Management" />} />
+          <Route path="payments" element={<ComingSoonPage title="Payments" />} />
+          <Route path="reports" element={<ComingSoonPage title="Reports" />} />
+          <Route path="notifications" element={<ComingSoonPage title="Notifications" />} />
+          <Route path="support" element={<ComingSoonPage title="Support" />} />
+          <Route path="settings" element={<ComingSoonPage title="Settings" />} />
+
         </Route>
 
       </Routes>

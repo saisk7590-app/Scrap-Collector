@@ -10,18 +10,22 @@ import {
   Settings,
   LogOut,
   Search,
+  UserCheck,
+  Headphones,
 } from "lucide-react";
 
 import "./DashboardLayout.css";
 
 const menuItems = [
   { path: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { path: "/users", icon: Users, label: "User Management" },
-  { path: "/pickup-requests", icon: Truck, label: "Pickup Requests" },
-  { path: "/scrap-categories", icon: Recycle, label: "Scrap Categories & Pricing" },
-  { path: "/wallet-payments", icon: Wallet, label: "Wallet & Payments" },
+  { path: "/pickups", icon: Truck, label: "Pickup Management" },
+  { path: "/customers", icon: Users, label: "Customers" },
+  { path: "/collectors", icon: UserCheck, label: "Collectors" },
+  { path: "/scrap-management", icon: Recycle, label: "Scrap Management" },
+  { path: "/payments", icon: Wallet, label: "Payments" },
+  { path: "/reports", icon: FileText, label: "Reports" },
   { path: "/notifications", icon: Bell, label: "Notifications" },
-  { path: "/reports", icon: FileText, label: "Reports & Analytics" },
+  { path: "/support", icon: Headphones, label: "Support" },
   { path: "/settings", icon: Settings, label: "Settings" },
 ];
 
@@ -76,31 +80,24 @@ export function DashboardLayout() {
       {/* Main Area */}
       <div className="main-area">
 
-        {/* Topbar */}
         <header className="topbar">
-
-          {/* Search */}
           <div className="search-wrapper">
             <Search className="search-icon" size={16} />
             <input className="search" placeholder="Search..." />
           </div>
 
           <div className="admin-info">
-
-            {/* Notification */}
             <div className="notification">
               <Bell size={18} />
               <span className="notification-badge">3</span>
             </div>
 
-            {/* Avatar */}
             <div className="avatar">AD</div>
 
             <div className="admin-details">
               <p className="admin-name">Admin User</p>
               <p className="admin-email">admin@scrap.com</p>
             </div>
-
           </div>
         </header>
 
